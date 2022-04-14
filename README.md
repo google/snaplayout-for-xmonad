@@ -2,7 +2,7 @@
 
 **This is not an officially supported Google product**
 
-SnapLayout ([SnapLayout.hs](SnapLayout.hs)) is an [XMonad](https://xmonad.org/) [LayoutClass](https://hackage.haskell.org/package/xmonad-0.17.0/docs/XMonad-Core.html#t:LayoutClass) that lets the user snap windows to particular edges of the screen, at 1/2 screen width or height.
+SnapLayout ([SnapLayout.hs](SnapLayout.hs)) is an [XMonad](https://xmonad.org/) [LayoutClass](https://hackage.haskell.org/package/xmonad-0.17.0/docs/XMonad-Core.html#t:LayoutClass) that lets the user snap windows to particular edges or corners of the screen, at 1/2 screen width and/or height.
 
 Usage:
 
@@ -26,10 +26,14 @@ For more detailed instructions on editing the `layoutHook` see:
 In the key-bindings, do something like:
 
 ```haskell
-, ((modm .|. controlMask, xK_KP_Left ), withFocused (sendMessage . Snap SnapLayout.Left))
-, ((modm .|. controlMask, xK_KP_Right), withFocused (sendMessage . Snap SnapLayout.Right))
-, ((modm .|. controlMask, xK_KP_Up   ), withFocused (sendMessage . Snap Top))
-, ((modm .|. controlMask, xK_KP_Down ), withFocused (sendMessage . Snap Bottom))
+, ((modm .|. controlMask, xK_KP_End      ), withFocused (sendMessage . Snap BottomLeft))
+, ((modm .|. controlMask, xK_KP_Down     ), withFocused (sendMessage . Snap Bottom))
+, ((modm .|. controlMask, xK_KP_Page_Down), withFocused (sendMessage . Snap BottomRight))
+, ((modm .|. controlMask, xK_KP_Left     ), withFocused (sendMessage . Snap SnapLayout.Left))
+, ((modm .|. controlMask, xK_KP_Right    ), withFocused (sendMessage . Snap SnapLayout.Right))
+, ((modm .|. controlMask, xK_KP_Home     ), withFocused (sendMessage . Snap TopLeft))
+, ((modm .|. controlMask, xK_KP_Up       ), withFocused (sendMessage . Snap Top))
+, ((modm .|. controlMask, xK_KP_Page_Up  ), withFocused (sendMessage . Snap TopRight))
 ...
 ```
 
@@ -47,7 +51,6 @@ cabal new-install --lib xmonad xmonad-contrib data-default
 
 ## Future Plans
 
-* support snapping to corners of the screen as well as sides
 * use alternative layout (maybe [Tall](https://hackage.haskell.org/package/xmonad-0.17.0/docs/XMonad-Layout.html#t:Tall), [Tabbed](https://hackage.haskell.org/package/xmonad-contrib-0.17.0/docs/XMonad-Layout-Tabbed.html), or [Grid](https://hackage.haskell.org/package/xmonad-contrib-0.17.0/docs/XMonad-Layout-Grid.html)?) for windows that aren't snapped
 * allow manual resizing of snapped windows
 * allow users to cycle through multiple standard sizes (1/2 screen, 1/3 screen, and 2/3 screen, for example)
