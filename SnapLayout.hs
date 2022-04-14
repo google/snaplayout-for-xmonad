@@ -34,7 +34,9 @@ module SnapLayout (
     -- $usage
     SnapLayout(..),
     SnapLoc(..),
-    Snap(..)
+    Snap(..),
+    FineAdjustmentMessage(..),
+    FineAdjustmentDirection(..)
   ) where
 
 import XMonad
@@ -68,6 +70,15 @@ import qualified Data.Map as Map
 -- > , ((modm .|. controlMask, xK_KP_Home     ), withFocused (sendMessage . Snap TopLeft))
 -- > , ((modm .|. controlMask, xK_KP_Up       ), withFocused (sendMessage . Snap Top))
 -- > , ((modm .|. controlMask, xK_KP_Page_Up  ), withFocused (sendMessage . Snap TopRight))
+-- >
+-- > , ((modm .|. controlMask .|. shiftMask, xK_KP_Up),
+-- >       withFocused (sendMessage . FineAdjustmentMessage TopAdjustment))
+-- > , ((modm .|. controlMask .|. shiftMask, xK_KP_Down),
+-- >       withFocused (sendMessage . FineAdjustmentMessage BottomAdjustment))
+-- > , ((modm .|. controlMask .|. shiftMask, xK_KP_Left),
+-- >       withFocused (sendMessage . FineAdjustmentMessage LeftAdjustment))
+-- > , ((modm .|. controlMask .|. shiftMask, xK_KP_Right),
+-- >       withFocused (sendMessage . FineAdjustmentMessage RightAdjustment))
 -- > ...
 --
 -- For detailed instruction on editing the key binding see:
@@ -75,8 +86,8 @@ import qualified Data.Map as Map
 -- "XMonad.Doc.Extending#Editing_key_bindings".
 
 -- SnaLoc represents a "location" that a window can be snapped to.
-data SnapLoc = Top | Bottom | Left | Right | TopLeft | TopRight | BottomLeft | BottomRight
-    deriving (Show, Read)
+data SnapLoc = Top | Bottom | Left | Right | TopLeft | TopRight | BottomLeft | BottomRight |
+    Unsnapped deriving (Show, Read)
 
 -- rectForLoc translates a parent Rectangle and a SnapLoc into a child Rectangle to render the
 -- window in.
@@ -106,14 +117,58 @@ leftHalf (Rectangle x y w h) = Rectangle x y (w `div` 2) h
 rightHalf :: Rectangle -> Rectangle
 rightHalf (Rectangle x y w h) = Rectangle (x + fromIntegral (w `div` 2)) y (w `div` 2) h
 
+-- adjustSnappedRect resizes a snapped rect given width and height adjustment counts.
+adjustSnappedRect :: Rectangle -> SnapLoc -> Integer -> Integer -> Rectangle
+adjustSnappedRect (Rectangle x y w h) Top wd hd = Rectangle x y w (h + fromIntegral hd)
+adjustSnappedRect (Rectangle x y w h) Bottom wd hd =
+    Rectangle x (y + fromIntegral hd) w (h - fromIntegral hd)
+adjustSnappedRect (Rectangle x y w h) SnapLayout.Left wd hd =
+    Rectangle x y (w + fromIntegral wd) h
+adjustSnappedRect (Rectangle x y w h) SnapLayout.Right wd hd =
+    Rectangle (x + fromIntegral wd) y (w - fromIntegral wd) h
+adjustSnappedRect r _ _ _ = r -- TODO: adjusting doesn't work for corner-snapped windows yet
+
+-- FullLoc describes the complete location of a window, including the SnapLoc to describe where the
+-- window is snapped to, and the adjusted window size.
+data FullLoc = FullLoc { snapLoc :: SnapLoc
+                       , widthDelta :: Integer
+                       , heightDelta :: Integer
+                       }
+                       deriving (Show, Read)
+
+instance Default FullLoc where
+    def = FullLoc Unsnapped 0 0
+
 -- Snap is a message that can be sent to SnapLayout in response to user input, which instructs the
 -- layout to snap a window to a particular SnapLoc.
 data Snap = Snap SnapLoc Window
 instance Message Snap
 
+-- FineAdjustmentDirection is the direction to resize a window.
+data FineAdjustmentDirection = TopAdjustment | BottomAdjustment | LeftAdjustment | RightAdjustment
+
+-- adjustWidth adds to a counter of width adjustments by FineAdjustmentDirection.
+adjustWidth :: Integer -> FineAdjustmentDirection -> Integer
+adjustWidth i TopAdjustment    = i
+adjustWidth i BottomAdjustment = i
+adjustWidth i LeftAdjustment   = i - 1
+adjustWidth i RightAdjustment  = i + 1
+
+-- adjustHeight adds to a counter of height adjustments by FineAdjustmentDirection.
+adjustHeight :: Integer -> FineAdjustmentDirection -> Integer
+adjustHeight i TopAdjustment    = i - 1
+adjustHeight i BottomAdjustment = i + 1
+adjustHeight i LeftAdjustment   = i
+adjustHeight i RightAdjustment  = i
+
+-- FineAdjustmentMessage is a message that can be sent to SnapLayout in response to user input,
+-- which instructs the layout to resize a snapped window in a particular direction.
+data FineAdjustmentMessage = FineAdjustmentMessage FineAdjustmentDirection Window
+instance Message FineAdjustmentMessage
+
 -- SnapLayout is a LayoutClass that lets the user snap windows to particular edges of the screen,
 -- at 1/2 screen width or height.
-data SnapLayout a = SnapLayout { snapped :: !(Map.Map Window SnapLoc)
+data SnapLayout a = SnapLayout { snapped :: !(Map.Map Window FullLoc)
                                }
                                deriving (Show, Read)
 
@@ -130,17 +185,30 @@ instance LayoutClass SnapLayout Window where
               layout w = (w, computeRect (Map.lookup w mp))
 
               -- computeRect compuates the location and bounds of a single window.
-              computeRect :: Maybe SnapLoc -> Rectangle
-              computeRect Nothing   = r
-              computeRect (Just sl) = rectForLoc r sl
+              computeRect :: Maybe FullLoc -> Rectangle
+              computeRect Nothing = r
+              computeRect (Just (FullLoc sl wd hd)) =
+                  adjustSnappedRect (rectForLoc r sl) sl (wd * 10) (hd * 10) -- TODO: unhardcode
 
     -- pureMessage receives messages from user actions.
     pureMessage :: SnapLayout Window -> SomeMessage -> Maybe (SnapLayout Window)
-    pureMessage (SnapLayout mp) m = msum [fmap snap (fromMessage m)]
+    pureMessage (SnapLayout mp) m = msum [ fmap snap (fromMessage m)
+                                         , fmap adjust (fromMessage m)
+                                         ]
         where
               -- snap instructs the layout to snap a window to a location.
               snap :: Snap -> SnapLayout Window
-              snap (Snap l w) = SnapLayout (Map.insert w l mp)
+              snap (Snap l w) = SnapLayout (Map.insert w (def {snapLoc = l}) mp)
+
+              -- adjust instructs the layout to resize a snapped window.
+              adjust :: FineAdjustmentMessage -> SnapLayout Window
+              adjust (FineAdjustmentMessage d w) = adjustRect d w (Map.lookup w mp)
+
+              -- adjustRect is a helper for `adjust` to unpack the `Maybe`.
+              adjustRect :: FineAdjustmentDirection -> Window -> Maybe FullLoc -> SnapLayout Window
+              adjustRect d w Nothing = SnapLayout mp
+              adjustRect d w (Just (FullLoc sl wd hd)) =
+                  SnapLayout (Map.insert w (FullLoc sl (adjustWidth wd d) (adjustHeight hd d)) mp)
 
     -- description does something, probably.
     description :: SnapLayout Window -> String

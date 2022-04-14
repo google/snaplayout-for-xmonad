@@ -34,6 +34,15 @@ In the key-bindings, do something like:
 , ((modm .|. controlMask, xK_KP_Home     ), withFocused (sendMessage . Snap TopLeft))
 , ((modm .|. controlMask, xK_KP_Up       ), withFocused (sendMessage . Snap Top))
 , ((modm .|. controlMask, xK_KP_Page_Up  ), withFocused (sendMessage . Snap TopRight))
+
+, ((modm .|. controlMask .|. shiftMask, xK_KP_Up),
+      withFocused (sendMessage . FineAdjustmentMessage TopAdjustment))
+, ((modm .|. controlMask .|. shiftMask, xK_KP_Down),
+      withFocused (sendMessage . FineAdjustmentMessage BottomAdjustment))
+, ((modm .|. controlMask .|. shiftMask, xK_KP_Left),
+      withFocused (sendMessage . FineAdjustmentMessage LeftAdjustment))
+, ((modm .|. controlMask .|. shiftMask, xK_KP_Right),
+      withFocused (sendMessage . FineAdjustmentMessage RightAdjustment))
 ...
 ```
 
@@ -52,7 +61,8 @@ cabal new-install --lib xmonad xmonad-contrib data-default
 ## Future Plans
 
 * use alternative layout (maybe [Tall](https://hackage.haskell.org/package/xmonad-0.17.0/docs/XMonad-Layout.html#t:Tall), [Tabbed](https://hackage.haskell.org/package/xmonad-contrib-0.17.0/docs/XMonad-Layout-Tabbed.html), or [Grid](https://hackage.haskell.org/package/xmonad-contrib-0.17.0/docs/XMonad-Layout-Grid.html)?) for windows that aren't snapped
-* allow manual resizing of snapped windows
+* allow manual resizing of snapped windows in both directions at once
+* allow custom resize increments
 * allow users to cycle through multiple standard sizes (1/2 screen, 1/3 screen, and 2/3 screen, for example)
   * if we start using non-1/2 sizes, then maybe also options for windows snapped to "middle cells" rather than just screen edges?
 * possibly a single-window full-screen mode
