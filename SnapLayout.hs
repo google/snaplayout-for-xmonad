@@ -12,7 +12,7 @@
 -- See the License for the specific language governing permissions and
 -- limitations under the License.
 
-{-# LANGUAGE FlexibleInstances, MultiParamTypeClasses #-}
+{-# LANGUAGE MultiParamTypeClasses, TypeSynonymInstances, InstanceSigs #-}
 
 ---------------------------------------------------------------------------------------------------
 -- |
@@ -122,6 +122,7 @@ instance Default (SnapLayout a) where
 
 instance LayoutClass SnapLayout Window where
     -- pureLayout is responsible for the actual positioning of windows on the screen.
+    pureLayout :: SnapLayout Window -> Rectangle -> W.Stack Window -> [(Window, Rectangle)]
     pureLayout (SnapLayout mp) r s = map layout (W.integrate s)
         where
               -- layout compuates the location and bounds of a single window, and returns a tuple of
@@ -134,8 +135,13 @@ instance LayoutClass SnapLayout Window where
               computeRect (Just sl) = rectForLoc r sl
 
     -- pureMessage receives messages from user actions.
+    pureMessage :: SnapLayout Window -> SomeMessage -> Maybe (SnapLayout Window)
     pureMessage (SnapLayout mp) m = msum [fmap snap (fromMessage m)]
-        where snap (Snap l w) = SnapLayout (Map.insert w l mp)
+        where
+              -- snap instructs the layout to snap a window to a location.
+              snap :: Snap -> SnapLayout Window
+              snap (Snap l w) = SnapLayout (Map.insert w l mp)
 
     -- description does something, probably.
-    description _ = "SnapLayout"
+    description :: SnapLayout Window -> String
+    description (SnapLayout mp) = "SnapLayout"
