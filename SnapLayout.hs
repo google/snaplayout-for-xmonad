@@ -78,6 +78,34 @@ import qualified Data.Map as Map
 data SnapLoc = Top | Bottom | Left | Right | TopLeft | TopRight | BottomLeft | BottomRight
     deriving (Show, Read)
 
+-- rectForLoc translates a parent Rectangle and a SnapLoc into a child Rectangle to render the
+-- window in.
+rectForLoc :: Rectangle -> SnapLoc -> Rectangle
+rectForLoc r Top              = topHalf r
+rectForLoc r Bottom           = bottomHalf r
+rectForLoc r SnapLayout.Left  = leftHalf r
+rectForLoc r SnapLayout.Right = rightHalf r
+rectForLoc r TopLeft          = topHalf . leftHalf $ r
+rectForLoc r TopRight         = topHalf . rightHalf $ r
+rectForLoc r BottomLeft       = bottomHalf . leftHalf $ r
+rectForLoc r BottomRight      = bottomHalf . rightHalf $ r
+
+-- topHalf returns the top half of a Rectangle.
+topHalf :: Rectangle -> Rectangle
+topHalf (Rectangle x y w h) = Rectangle x y w (h `div` 2)
+
+-- bottomHalf returns the bottom half of a Rectangle.
+bottomHalf :: Rectangle -> Rectangle
+bottomHalf (Rectangle x y w h) = Rectangle x (y + fromIntegral (h `div` 2)) w (h `div` 2)
+
+-- leftHalf returns the left half of a Rectangle.
+leftHalf :: Rectangle -> Rectangle
+leftHalf (Rectangle x y w h) = Rectangle x y (w `div` 2) h
+
+-- rightHalf returns the right half of a Rectangle.
+rightHalf :: Rectangle -> Rectangle
+rightHalf (Rectangle x y w h) = Rectangle (x + fromIntegral (w `div` 2)) y (w `div` 2) h
+
 -- Snap is a message that can be sent to SnapLayout in response to user input, which instructs the
 -- layout to snap a window to a particular SnapLoc.
 data Snap = Snap SnapLoc Window
@@ -104,36 +132,6 @@ instance LayoutClass SnapLayout Window where
               computeRect :: Maybe SnapLoc -> Rectangle
               computeRect Nothing   = r
               computeRect (Just sl) = rectForLoc r sl
-
-              -- rectForLoc translates a parent Rectangle and a SnapLoc into a child Rectangle to
-              -- render the window in.
-              rectForLoc :: Rectangle -> SnapLoc -> Rectangle
-              rectForLoc r Top              = topHalf r
-              rectForLoc r Bottom           = bottomHalf r
-              rectForLoc r SnapLayout.Left  = leftHalf r
-              rectForLoc r SnapLayout.Right = rightHalf r
-              rectForLoc r TopLeft          = topHalf . leftHalf $ r
-              rectForLoc r TopRight         = topHalf . rightHalf $ r
-              rectForLoc r BottomLeft       = bottomHalf . leftHalf $ r
-              rectForLoc r BottomRight      = bottomHalf . rightHalf $ r
-
-              -- topHalf returns the top half of a Rectangle.
-              topHalf :: Rectangle -> Rectangle
-              topHalf (Rectangle x y w h) = Rectangle x y w (h `div` 2)
-
-              -- bottomHalf returns the bottom half of a Rectangle.
-              bottomHalf :: Rectangle -> Rectangle
-              bottomHalf (Rectangle x y w h) =
-                  Rectangle x (y + fromIntegral (h `div` 2)) w (h `div` 2)
-
-              -- leftHalf returns the left half of a Rectangle.
-              leftHalf :: Rectangle -> Rectangle
-              leftHalf (Rectangle x y w h) = Rectangle x y (w `div` 2) h
-
-              -- rightHalf returns the right half of a Rectangle.
-              rightHalf :: Rectangle -> Rectangle
-              rightHalf (Rectangle x y w h) =
-                  Rectangle (x + fromIntegral (w `div` 2)) y (w `div` 2) h
 
     -- pureMessage receives messages from user actions.
     pureMessage (SnapLayout mp) m = msum [fmap snap (fromMessage m)]
