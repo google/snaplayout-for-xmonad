@@ -71,14 +71,22 @@ import qualified Data.Map as Map
 -- > , ((modm .|. controlMask, xK_KP_Up       ), withFocused (sendMessage . Snap Top))
 -- > , ((modm .|. controlMask, xK_KP_Page_Up  ), withFocused (sendMessage . Snap TopRight))
 -- >
--- > , ((modm .|. controlMask .|. shiftMask, xK_KP_Up),
--- >       withFocused (sendMessage . FineAdjustmentMessage TopAdjustment))
+-- > , ((modm .|. controlMask .|. shiftMask, xK_KP_End),
+-- >       withFocused (sendMessage . FineAdjustmentMessage BottomLeftAdjustment))
 -- > , ((modm .|. controlMask .|. shiftMask, xK_KP_Down),
 -- >       withFocused (sendMessage . FineAdjustmentMessage BottomAdjustment))
+-- > , ((modm .|. controlMask .|. shiftMask, xK_KP_Page_Down),
+-- >       withFocused (sendMessage . FineAdjustmentMessage BottomRightAdjustment))
 -- > , ((modm .|. controlMask .|. shiftMask, xK_KP_Left),
 -- >       withFocused (sendMessage . FineAdjustmentMessage LeftAdjustment))
 -- > , ((modm .|. controlMask .|. shiftMask, xK_KP_Right),
 -- >       withFocused (sendMessage . FineAdjustmentMessage RightAdjustment))
+-- > , ((modm .|. controlMask .|. shiftMask, xK_KP_Home),
+-- >       withFocused (sendMessage . FineAdjustmentMessage TopLeftAdjustment))
+-- > , ((modm .|. controlMask .|. shiftMask, xK_KP_Up),
+-- >       withFocused (sendMessage . FineAdjustmentMessage TopAdjustment))
+-- > , ((modm .|. controlMask .|. shiftMask, xK_KP_Page_Up),
+-- >       withFocused (sendMessage . FineAdjustmentMessage TopRightAdjustment))
 -- > ...
 --
 -- For detailed instruction on editing the key binding see:
@@ -119,14 +127,26 @@ rightHalf (Rectangle x y w h) = Rectangle (x + fromIntegral (w `div` 2)) y (w `d
 
 -- adjustSnappedRect resizes a snapped rect given width and height adjustment counts.
 adjustSnappedRect :: Rectangle -> SnapLoc -> Integer -> Integer -> Rectangle
-adjustSnappedRect (Rectangle x y w h) Top wd hd = Rectangle x y w (h + fromIntegral hd)
-adjustSnappedRect (Rectangle x y w h) Bottom wd hd =
-    Rectangle x (y + fromIntegral hd) w (h - fromIntegral hd)
-adjustSnappedRect (Rectangle x y w h) SnapLayout.Left wd hd =
-    Rectangle x y (w + fromIntegral wd) h
-adjustSnappedRect (Rectangle x y w h) SnapLayout.Right wd hd =
-    Rectangle (x + fromIntegral wd) y (w - fromIntegral wd) h
-adjustSnappedRect r _ _ _ = r -- TODO: adjusting doesn't work for corner-snapped windows yet
+adjustSnappedRect r Top wd hd              = adjustTop r hd
+adjustSnappedRect r Bottom wd hd           = adjustBottom r hd
+adjustSnappedRect r SnapLayout.Left wd hd  = adjustLeft r wd
+adjustSnappedRect r SnapLayout.Right wd hd = adjustRight r wd
+adjustSnappedRect r TopLeft wd hd          = adjustTop (adjustLeft r wd) hd
+adjustSnappedRect r TopRight wd hd         = adjustTop (adjustRight r wd) hd
+adjustSnappedRect r BottomLeft wd hd       = adjustBottom (adjustLeft r wd) hd
+adjustSnappedRect r BottomRight wd hd      = adjustBottom (adjustLeft r wd) hd
+
+adjustTop :: Rectangle -> Integer -> Rectangle
+adjustTop (Rectangle x y w h) hd = Rectangle x y w (h + fromIntegral hd)
+
+adjustBottom :: Rectangle -> Integer -> Rectangle
+adjustBottom (Rectangle x y w h) hd = Rectangle x (y + fromIntegral hd) w (h - fromIntegral hd)
+
+adjustLeft :: Rectangle -> Integer -> Rectangle
+adjustLeft (Rectangle x y w h) wd = Rectangle x y (w + fromIntegral wd) h
+
+adjustRight :: Rectangle -> Integer -> Rectangle
+adjustRight (Rectangle x y w h) wd = Rectangle (x + fromIntegral wd) y (w - fromIntegral wd) h
 
 -- FullLoc describes the complete location of a window, including the SnapLoc to describe where the
 -- window is snapped to, and the adjusted window size.
@@ -145,21 +165,30 @@ data Snap = Snap SnapLoc Window
 instance Message Snap
 
 -- FineAdjustmentDirection is the direction to resize a window.
-data FineAdjustmentDirection = TopAdjustment | BottomAdjustment | LeftAdjustment | RightAdjustment
+data FineAdjustmentDirection = TopAdjustment | BottomAdjustment | LeftAdjustment | RightAdjustment |
+    TopLeftAdjustment | TopRightAdjustment | BottomLeftAdjustment | BottomRightAdjustment
 
 -- adjustWidth adds to a counter of width adjustments by FineAdjustmentDirection.
 adjustWidth :: Integer -> FineAdjustmentDirection -> Integer
-adjustWidth i TopAdjustment    = i
-adjustWidth i BottomAdjustment = i
-adjustWidth i LeftAdjustment   = i - 1
-adjustWidth i RightAdjustment  = i + 1
+adjustWidth i TopAdjustment         = i
+adjustWidth i BottomAdjustment      = i
+adjustWidth i LeftAdjustment        = i - 1
+adjustWidth i RightAdjustment       = i + 1
+adjustWidth i TopLeftAdjustment     = i - 1
+adjustWidth i TopRightAdjustment    = i + 1
+adjustWidth i BottomLeftAdjustment  = i - 1
+adjustWidth i BottomRightAdjustment = i + 1
 
 -- adjustHeight adds to a counter of height adjustments by FineAdjustmentDirection.
 adjustHeight :: Integer -> FineAdjustmentDirection -> Integer
-adjustHeight i TopAdjustment    = i - 1
-adjustHeight i BottomAdjustment = i + 1
-adjustHeight i LeftAdjustment   = i
-adjustHeight i RightAdjustment  = i
+adjustHeight i TopAdjustment         = i - 1
+adjustHeight i BottomAdjustment      = i + 1
+adjustHeight i LeftAdjustment        = i
+adjustHeight i RightAdjustment       = i
+adjustHeight i TopLeftAdjustment     = i - 1
+adjustHeight i TopRightAdjustment    = i - 1
+adjustHeight i BottomLeftAdjustment  = i + 1
+adjustHeight i BottomRightAdjustment = i + 1
 
 -- FineAdjustmentMessage is a message that can be sent to SnapLayout in response to user input,
 -- which instructs the layout to resize a snapped window in a particular direction.
