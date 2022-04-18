@@ -36,7 +36,8 @@ module SnapLayout (
     SnapLoc(..),
     Snap(..),
     FineAdjustmentMessage(..),
-    FineAdjustmentDirection(..)
+    FineAdjustmentDirection(..),
+    Unsnap(..)
   ) where
 
 import XMonad
@@ -70,6 +71,7 @@ import qualified Data.Map as Map
 -- > , ((modm .|. controlMask, xK_KP_Home     ), withFocused (sendMessage . Snap TopLeft))
 -- > , ((modm .|. controlMask, xK_KP_Up       ), withFocused (sendMessage . Snap Top))
 -- > , ((modm .|. controlMask, xK_KP_Page_Up  ), withFocused (sendMessage . Snap TopRight))
+-- > , ((modm .|. controlMask, xK_KP_Insert   ), withFocused (sendMessage . Unsnap))
 -- >
 -- > , ((modm .|. controlMask .|. shiftMask, xK_KP_End),
 -- >       withFocused (sendMessage . FineAdjustmentMessage BottomLeftAdjustment))
@@ -94,8 +96,8 @@ import qualified Data.Map as Map
 -- "XMonad.Doc.Extending#Editing_key_bindings".
 
 -- SnaLoc represents a "location" that a window can be snapped to.
-data SnapLoc = Top | Bottom | Left | Right | TopLeft | TopRight | BottomLeft | BottomRight |
-    Unsnapped deriving (Show, Read)
+data SnapLoc = Top | Bottom | Left | Right | TopLeft | TopRight | BottomLeft | BottomRight
+    deriving (Show, Read)
 
 -- rectForLoc translates a parent Rectangle and a SnapLoc into a child Rectangle to render the
 -- window in.
@@ -157,7 +159,7 @@ data FullLoc = FullLoc { snapLoc :: SnapLoc
                        deriving (Show, Read)
 
 instance Default FullLoc where
-    def = FullLoc Unsnapped 0 0
+    def = FullLoc SnapLayout.Left 0 0
 
 -- Snap is a message that can be sent to SnapLayout in response to user input, which instructs the
 -- layout to snap a window to a particular SnapLoc.
@@ -195,6 +197,11 @@ adjustHeight i BottomRightAdjustment = i + 1
 data FineAdjustmentMessage = FineAdjustmentMessage FineAdjustmentDirection Window
 instance Message FineAdjustmentMessage
 
+-- Unsnap is a message that can be sent to SnapLayout in response to user input, which instructs the
+-- layout to unsnap a window.
+data Unsnap = Unsnap Window
+instance Message Unsnap
+
 -- SnapLayout is a LayoutClass that lets the user snap windows to particular edges of the screen,
 -- at 1/2 screen width or height.
 data SnapLayout a = SnapLayout { snapped :: !(Map.Map Window FullLoc)
@@ -223,6 +230,7 @@ instance LayoutClass SnapLayout Window where
     pureMessage :: SnapLayout Window -> SomeMessage -> Maybe (SnapLayout Window)
     pureMessage (SnapLayout mp) m = msum [ fmap snap (fromMessage m)
                                          , fmap adjust (fromMessage m)
+                                         , fmap unsnap (fromMessage m)
                                          ]
         where
               -- snap instructs the layout to snap a window to a location.
@@ -238,6 +246,10 @@ instance LayoutClass SnapLayout Window where
               adjustRect d w Nothing = SnapLayout mp
               adjustRect d w (Just (FullLoc sl wd hd)) =
                   SnapLayout (Map.insert w (FullLoc sl (adjustWidth wd d) (adjustHeight hd d)) mp)
+
+              -- unsnap instructs the layout to unsnap a window.
+              unsnap :: Unsnap -> SnapLayout Window
+              unsnap (Unsnap w) = SnapLayout (Map.delete w mp)
 
     -- description does something, probably.
     description :: SnapLayout Window -> String

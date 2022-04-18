@@ -34,6 +34,7 @@ In the key-bindings, do something like:
 , ((modm .|. controlMask, xK_KP_Home     ), withFocused (sendMessage . Snap TopLeft))
 , ((modm .|. controlMask, xK_KP_Up       ), withFocused (sendMessage . Snap Top))
 , ((modm .|. controlMask, xK_KP_Page_Up  ), withFocused (sendMessage . Snap TopRight))
+, ((modm .|. controlMask, xK_KP_Insert   ), withFocused (sendMessage . Unsnap))
 
 , ((modm .|. controlMask .|. shiftMask, xK_KP_End),
       withFocused (sendMessage . FineAdjustmentMessage BottomLeftAdjustment))
@@ -73,7 +74,6 @@ cabal new-install --lib xmonad xmonad-contrib data-default
 * allow users to cycle through multiple standard sizes (1/2 screen, 1/3 screen, and 2/3 screen, for example)
   * if we start using non-1/2 sizes, then maybe also options for windows snapped to "middle cells" rather than just screen edges?
 * possibly a single-window full-screen mode
-* a way to "unsnap" a window
 * stack overlapping windows in a better order (maybe last touched on top?)
 
 ## Contributing
