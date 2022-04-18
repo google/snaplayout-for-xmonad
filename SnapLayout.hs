@@ -37,7 +37,8 @@ module SnapLayout (
     Snap(..),
     FineAdjustmentMessage(..),
     FineAdjustmentDirection(..),
-    Unsnap(..)
+    Unsnap(..),
+    Unadjust(..)
   ) where
 
 import XMonad
@@ -89,6 +90,7 @@ import qualified Data.Map as Map
 -- >       withFocused (sendMessage . FineAdjustmentMessage TopAdjustment))
 -- > , ((modm .|. controlMask .|. shiftMask, xK_KP_Page_Up),
 -- >       withFocused (sendMessage . FineAdjustmentMessage TopRightAdjustment))
+-- > , ((modm .|. controlMask .|. shiftMask, xK_KP_Insert), withFocused (sendMessage . Unadjust))
 -- > ...
 --
 -- For detailed instruction on editing the key binding see:
@@ -202,6 +204,11 @@ instance Message FineAdjustmentMessage
 data Unsnap = Unsnap Window
 instance Message Unsnap
 
+-- Unadjust is a message that can be sent to SnapLayout in response to user input, which instructs
+-- the layout to reset fine adjustments for a window.
+data Unadjust = Unadjust Window
+instance Message Unadjust
+
 -- SnapLayout is a LayoutClass that lets the user snap windows to particular edges of the screen,
 -- at 1/2 screen width or height.
 data SnapLayout a = SnapLayout { snapped :: !(Map.Map Window FullLoc)
@@ -231,6 +238,7 @@ instance LayoutClass SnapLayout Window where
     pureMessage (SnapLayout mp) m = msum [ fmap snap (fromMessage m)
                                          , fmap adjust (fromMessage m)
                                          , fmap unsnap (fromMessage m)
+                                         , fmap unadjust (fromMessage m)
                                          ]
         where
               -- snap instructs the layout to snap a window to a location.
@@ -250,6 +258,15 @@ instance LayoutClass SnapLayout Window where
               -- unsnap instructs the layout to unsnap a window.
               unsnap :: Unsnap -> SnapLayout Window
               unsnap (Unsnap w) = SnapLayout (Map.delete w mp)
+
+              -- unadjust instructs the layout to reset a window's find adjustments.
+              unadjust :: Unadjust -> SnapLayout Window
+              unadjust (Unadjust w) = unadjustRect w (Map.lookup w mp)
+
+              -- unadjustRect is a helper for `unadjust` to unpack the `Maybe`.
+              unadjustRect :: Window -> Maybe FullLoc -> SnapLayout Window
+              unadjustRect w Nothing = SnapLayout mp
+              unadjustRect w (Just (FullLoc sl _ _)) = SnapLayout (Map.insert w (FullLoc sl 0 0) mp)
 
     -- description does something, probably.
     description :: SnapLayout Window -> String

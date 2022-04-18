@@ -52,6 +52,7 @@ In the key-bindings, do something like:
       withFocused (sendMessage . FineAdjustmentMessage TopAdjustment))
 , ((modm .|. controlMask .|. shiftMask, xK_KP_Page_Up),
       withFocused (sendMessage . FineAdjustmentMessage TopRightAdjustment))
+, ((modm .|. controlMask .|. shiftMask, xK_KP_Insert), withFocused (sendMessage . Unadjust))
 ...
 ```
 
