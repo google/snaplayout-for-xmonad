@@ -134,7 +134,7 @@ adjustSnappedRect r SnapLayout.Right wd hd = adjustRight r wd
 adjustSnappedRect r TopLeft wd hd          = adjustTop (adjustLeft r wd) hd
 adjustSnappedRect r TopRight wd hd         = adjustTop (adjustRight r wd) hd
 adjustSnappedRect r BottomLeft wd hd       = adjustBottom (adjustLeft r wd) hd
-adjustSnappedRect r BottomRight wd hd      = adjustBottom (adjustLeft r wd) hd
+adjustSnappedRect r BottomRight wd hd      = adjustBottom (adjustRight r wd) hd
 
 adjustTop :: Rectangle -> Integer -> Rectangle
 adjustTop (Rectangle x y w h) hd = Rectangle x y w (h + fromIntegral hd)
