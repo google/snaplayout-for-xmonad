@@ -15,7 +15,20 @@ import SnapLayout
 Then edit your `layoutHook` by adding the SnapLayout:
 
 ```haskell
-myLayout = SnapLayout def ||| Full ||| etc..
+myLayout = snapLayout ||| Full ||| etc..
+  where
+    snapLayout :: SnapLayout a
+    snapLayout = def
+main = xmonad def { layoutHook = myLayout }
+```
+
+Or, to customize the fine adjustment increment:
+
+```haskell
+myLayout = snapLayout ||| Full ||| etc..
+  where
+    snapLayout :: SnapLayout a
+    snapLayout = def { adjustmentDelta = 3/100 }
 main = xmonad def { layoutHook = myLayout }
 ```
 
@@ -71,7 +84,6 @@ cabal new-install --lib xmonad xmonad-contrib data-default
 ## Future Plans
 
 * use alternative layout (maybe [Tall](https://hackage.haskell.org/package/xmonad-0.17.0/docs/XMonad-Layout.html#t:Tall), [Tabbed](https://hackage.haskell.org/package/xmonad-contrib-0.17.0/docs/XMonad-Layout-Tabbed.html), or [Grid](https://hackage.haskell.org/package/xmonad-contrib-0.17.0/docs/XMonad-Layout-Grid.html)?) for windows that aren't snapped
-* allow custom resize increments
 * allow users to cycle through multiple standard sizes (1/2 screen, 1/3 screen, and 2/3 screen, for example)
   * if we start using non-1/2 sizes, then maybe also options for windows snapped to "middle cells" rather than just screen edges?
 * possibly a single-window full-screen mode

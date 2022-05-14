@@ -55,7 +55,18 @@ import qualified Data.Map as Map
 --
 -- Then edit your @layoutHook@ by adding the SnapLayout:
 --
--- > myLayout = SnapLayout def ||| Full ||| etc..
+-- > myLayout = snapLayout ||| Full ||| etc..
+-- >   where
+-- >     snapLayout :: SnapLayout a
+-- >     snapLayout = def
+-- > main = xmonad def { layoutHook = myLayout }
+--
+-- Or, to customize the fine adjustment increment:
+--
+-- > myLayout = snapLayout ||| Full ||| etc..
+-- >   where
+-- >     snapLayout :: SnapLayout a
+-- >     snapLayout = def { adjustmentDelta = 3/100 }
 -- > main = xmonad def { layoutHook = myLayout }
 --
 -- For more detailed instructions on editing the layoutHook see:
@@ -211,17 +222,18 @@ instance Message Unadjust
 
 -- SnapLayout is a LayoutClass that lets the user snap windows to particular edges of the screen,
 -- at 1/2 screen width or height.
-data SnapLayout a = SnapLayout { snapped :: !(Map.Map Window FullLoc)
+data SnapLayout a = SnapLayout { snapped :: !(Map.Map Window FullLoc) -- ^ Map used internally to keep track of Window states (default: Map.empty)
+                               , adjustmentDelta :: Rational          -- ^ Percent of screen to adjust by in response to each FineAdjustmentMessage (default: 3/100)
                                }
                                deriving (Show, Read)
 
 instance Default (SnapLayout a) where
-    def = SnapLayout Map.empty
+    def = SnapLayout Map.empty (3 / 100)
 
 instance LayoutClass SnapLayout Window where
     -- pureLayout is responsible for the actual positioning of windows on the screen.
     pureLayout :: SnapLayout Window -> Rectangle -> W.Stack Window -> [(Window, Rectangle)]
-    pureLayout (SnapLayout mp) r s = map layout (W.integrate s)
+    pureLayout (SnapLayout mp ad) (Rectangle x y w h) s = map layout (W.integrate s)
         where
               -- layout compuates the location and bounds of a single window, and returns a tuple of
               -- the bounds with the window itself.
@@ -229,21 +241,23 @@ instance LayoutClass SnapLayout Window where
 
               -- computeRect compuates the location and bounds of a single window.
               computeRect :: Maybe FullLoc -> Rectangle
-              computeRect Nothing = r
+              computeRect Nothing = Rectangle x y w h
               computeRect (Just (FullLoc sl wd hd)) =
-                  adjustSnappedRect (rectForLoc r sl) sl (wd * 10) (hd * 10) -- TODO: unhardcode
+                  adjustSnappedRect (rectForLoc (Rectangle x y w h) sl) sl
+                                    (floor $ ad * fromIntegral wd * fromIntegral w)
+                                    (floor $ ad * fromIntegral hd * fromIntegral h)
 
     -- pureMessage receives messages from user actions.
     pureMessage :: SnapLayout Window -> SomeMessage -> Maybe (SnapLayout Window)
-    pureMessage (SnapLayout mp) m = msum [ fmap snap (fromMessage m)
-                                         , fmap adjust (fromMessage m)
-                                         , fmap unsnap (fromMessage m)
-                                         , fmap unadjust (fromMessage m)
-                                         ]
+    pureMessage (SnapLayout mp ad) m = msum [ fmap snap (fromMessage m)
+                                            , fmap adjust (fromMessage m)
+                                            , fmap unsnap (fromMessage m)
+                                            , fmap unadjust (fromMessage m)
+                                            ]
         where
               -- snap instructs the layout to snap a window to a location.
               snap :: Snap -> SnapLayout Window
-              snap (Snap l w) = SnapLayout (Map.insert w (def {snapLoc = l}) mp)
+              snap (Snap l w) = SnapLayout (Map.insert w (def {snapLoc = l}) mp) ad
 
               -- adjust instructs the layout to resize a snapped window.
               adjust :: FineAdjustmentMessage -> SnapLayout Window
@@ -251,13 +265,14 @@ instance LayoutClass SnapLayout Window where
 
               -- adjustRect is a helper for `adjust` to unpack the `Maybe`.
               adjustRect :: FineAdjustmentDirection -> Window -> Maybe FullLoc -> SnapLayout Window
-              adjustRect d w Nothing = SnapLayout mp
+              adjustRect d w Nothing = SnapLayout mp ad
               adjustRect d w (Just (FullLoc sl wd hd)) =
                   SnapLayout (Map.insert w (FullLoc sl (adjustWidth wd d) (adjustHeight hd d)) mp)
+                             ad
 
               -- unsnap instructs the layout to unsnap a window.
               unsnap :: Unsnap -> SnapLayout Window
-              unsnap (Unsnap w) = SnapLayout (Map.delete w mp)
+              unsnap (Unsnap w) = SnapLayout (Map.delete w mp) ad
 
               -- unadjust instructs the layout to reset a window's find adjustments.
               unadjust :: Unadjust -> SnapLayout Window
@@ -265,9 +280,10 @@ instance LayoutClass SnapLayout Window where
 
               -- unadjustRect is a helper for `unadjust` to unpack the `Maybe`.
               unadjustRect :: Window -> Maybe FullLoc -> SnapLayout Window
-              unadjustRect w Nothing = SnapLayout mp
+              unadjustRect w Nothing = SnapLayout mp ad
               unadjustRect w (Just (FullLoc sl _ _)) = SnapLayout (Map.insert w (FullLoc sl 0 0) mp)
+                                                                  ad
 
     -- description does something, probably.
     description :: SnapLayout Window -> String
-    description (SnapLayout mp) = "SnapLayout"
+    description (SnapLayout mp ad) = "SnapLayout"
