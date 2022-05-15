@@ -241,11 +241,14 @@ instance LayoutClass SnapLayout Window where
 
               -- computeRect compuates the location and bounds of a single window.
               computeRect :: Maybe FullLoc -> Rectangle
-              computeRect Nothing = Rectangle x y w h
+              computeRect Nothing = r
               computeRect (Just (FullLoc sl wd hd)) =
-                  adjustSnappedRect (rectForLoc (Rectangle x y w h) sl) sl
+                  adjustSnappedRect (rectForLoc r sl) sl
                                     (floor $ ad * fromIntegral wd * fromIntegral w)
                                     (floor $ ad * fromIntegral hd * fromIntegral h)
+
+              r :: Rectangle
+              r = Rectangle x y w h
 
     -- pureMessage receives messages from user actions.
     pureMessage :: SnapLayout Window -> SomeMessage -> Maybe (SnapLayout Window)
@@ -265,7 +268,7 @@ instance LayoutClass SnapLayout Window where
 
               -- adjustRect is a helper for `adjust` to unpack the `Maybe`.
               adjustRect :: FineAdjustmentDirection -> Window -> Maybe FullLoc -> SnapLayout Window
-              adjustRect d w Nothing = SnapLayout mp ad
+              adjustRect d w Nothing = sl
               adjustRect d w (Just (FullLoc sl wd hd)) =
                   SnapLayout (Map.insert w (FullLoc sl (adjustWidth wd d) (adjustHeight hd d)) mp)
                              ad
@@ -280,9 +283,12 @@ instance LayoutClass SnapLayout Window where
 
               -- unadjustRect is a helper for `unadjust` to unpack the `Maybe`.
               unadjustRect :: Window -> Maybe FullLoc -> SnapLayout Window
-              unadjustRect w Nothing = SnapLayout mp ad
+              unadjustRect w Nothing = sl
               unadjustRect w (Just (FullLoc sl _ _)) = SnapLayout (Map.insert w (FullLoc sl 0 0) mp)
                                                                   ad
+
+              sl :: SnapLayout Window
+              sl = SnapLayout mp ad
 
     -- description does something, probably.
     description :: SnapLayout Window -> String
