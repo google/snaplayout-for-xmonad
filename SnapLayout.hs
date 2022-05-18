@@ -71,7 +71,7 @@ import qualified Data.Map as Map
 --
 -- For more detailed instructions on editing the layoutHook see:
 --
--- "XMonad.Doc.Extending#Editing_the_layout_hook"
+-- https://hackage.haskell.org/package/xmonad-contrib-0.17.0/docs/XMonad-Doc-Extending.html#Editing_the_layout_hook
 --
 -- In the key-bindings, do something like:
 --
@@ -106,7 +106,7 @@ import qualified Data.Map as Map
 --
 -- For detailed instruction on editing the key binding see:
 --
--- "XMonad.Doc.Extending#Editing_key_bindings".
+-- https://hackage.haskell.org/package/xmonad-contrib-0.17.0/docs/XMonad-Doc-Extending.html#Editing_key_bindings
 
 -- SnaLoc represents a "location" that a window can be snapped to.
 data SnapLoc = Top | Bottom | Left | Right | TopLeft | TopRight | BottomLeft | BottomRight

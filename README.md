@@ -34,7 +34,7 @@ main = xmonad def { layoutHook = myLayout }
 
 For more detailed instructions on editing the `layoutHook` see:
 
-[XMonad.Doc.Extending#Editing_the_layout_hook](https://hackage.haskell.org/package/xmonad-contrib-0.17.0/docs/XMonad-Doc-Extending.html#Editing_the_layout_hook)
+https://hackage.haskell.org/package/xmonad-contrib-0.17.0/docs/XMonad-Doc-Extending.html#Editing_the_layout_hook
 
 In the key-bindings, do something like:
 
@@ -71,7 +71,7 @@ In the key-bindings, do something like:
 
 For detailed instruction on editing the key binding see:
 
-[XMonad.Doc.Extending#Editing_key_bindings](https://hackage.haskell.org/package/xmonad-contrib-0.17.0/docs/XMonad-Doc-Extending.html#Editing_key_bindings)
+https://hackage.haskell.org/package/xmonad-contrib-0.17.0/docs/XMonad-Doc-Extending.html#Editing_key_bindings
 
 ## Installing Dependencies
 
