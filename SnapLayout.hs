@@ -142,24 +142,28 @@ rightHalf (Rectangle x y w h) = Rectangle (x + fromIntegral (w `div` 2)) y (w `d
 
 -- adjustSnappedRect resizes a snapped rect given width and height adjustment counts.
 adjustSnappedRect :: Rectangle -> SnapLoc -> Integer -> Integer -> Rectangle
-adjustSnappedRect r Top wd hd              = adjustTop r hd
-adjustSnappedRect r Bottom wd hd           = adjustBottom r hd
-adjustSnappedRect r SnapLayout.Left wd hd  = adjustLeft r wd
+adjustSnappedRect r Top              wd hd = adjustTop r hd
+adjustSnappedRect r Bottom           wd hd = adjustBottom r hd
+adjustSnappedRect r SnapLayout.Left  wd hd = adjustLeft r wd
 adjustSnappedRect r SnapLayout.Right wd hd = adjustRight r wd
-adjustSnappedRect r TopLeft wd hd          = adjustTop (adjustLeft r wd) hd
-adjustSnappedRect r TopRight wd hd         = adjustTop (adjustRight r wd) hd
-adjustSnappedRect r BottomLeft wd hd       = adjustBottom (adjustLeft r wd) hd
-adjustSnappedRect r BottomRight wd hd      = adjustBottom (adjustRight r wd) hd
+adjustSnappedRect r TopLeft          wd hd = adjustTop (adjustLeft r wd) hd
+adjustSnappedRect r TopRight         wd hd = adjustTop (adjustRight r wd) hd
+adjustSnappedRect r BottomLeft       wd hd = adjustBottom (adjustLeft r wd) hd
+adjustSnappedRect r BottomRight      wd hd = adjustBottom (adjustRight r wd) hd
 
+-- adjustTop "adjusts" a top-snapped Rectangle by moving the bottom edge.
 adjustTop :: Rectangle -> Integer -> Rectangle
 adjustTop (Rectangle x y w h) hd = Rectangle x y w (h + fromIntegral hd)
 
+-- adjustBottom "adjusts" a bottom-snapped Rectangle by moving the top edge.
 adjustBottom :: Rectangle -> Integer -> Rectangle
 adjustBottom (Rectangle x y w h) hd = Rectangle x (y + fromIntegral hd) w (h - fromIntegral hd)
 
+-- adjustLeft "adjusts" a left-snapped Rectangle by moving the right edge.
 adjustLeft :: Rectangle -> Integer -> Rectangle
 adjustLeft (Rectangle x y w h) wd = Rectangle x y (w + fromIntegral wd) h
 
+-- adjustRight "adjusts" a right-snapped Rectangle by moving the left edge.
 adjustRight :: Rectangle -> Integer -> Rectangle
 adjustRight (Rectangle x y w h) wd = Rectangle (x + fromIntegral wd) y (w - fromIntegral wd) h
 
