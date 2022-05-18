@@ -25,8 +25,8 @@
 -- Stability   :  unstable
 -- Portability :  unportable
 --
--- LayoutClass that lets the user snap windows to particular edges or corners of the screen, at 1/2
--- screen width and/or height.
+-- LayoutClass that lets the user snap windows to particular edges or corners of the screen, at
+-- various fractions of screen width and/or height.
 ---------------------------------------------------------------------------------------------------
 
 module SnapLayout (
@@ -110,7 +110,7 @@ import qualified Data.Map as Map
 
 -- SnaLoc represents a "location" that a window can be snapped to.
 data SnapLoc = Top | Bottom | Left | Right | TopLeft | TopRight | BottomLeft | BottomRight
-    deriving (Show, Read)
+    deriving (Show, Read, Eq)
 
 -- rectForLoc translates a parent Rectangle and a SnapLoc into a child Rectangle to render the
 -- window in.
@@ -191,6 +191,29 @@ data FullLoc = FullLoc { snapLoc :: SnapLoc     -- ^ Location of the screen to w
 instance Default FullLoc where
     def = FullLoc SnapLayout.Left (1 / 2) 0 0
 
+-- cycleSnapModes either:
+--   a) snaps a window to the given SnapLoc at the default baseSize if it was not already snapped,
+--      or was snapped to a different SnapLoc, OR
+--   b) cycles between baseSizes (1/2 -> 1/3 -> 2/3 -> 1/2 ...)
+cycleSnapModes :: SnapLoc -> Maybe FullLoc -> FullLoc
+cycleSnapModes l Nothing = adfl l
+cycleSnapModes l (Just (FullLoc sl bs _ _))
+    | l == sl   = cycleSnapModes' sl bs
+    | otherwise = adfl l
+
+-- cycleSnapModes' is a helper for cycleSnapModes. Unburdened by the default cases in
+-- cycleSnapModes, all we have to do here is cycle between 1/2-screen, 1/3-screen, and
+-- 2/3-screen snap modes.
+cycleSnapModes' :: SnapLoc -> Rational -> FullLoc
+cycleSnapModes' l r
+    | r == (1 / 2) = def {snapLoc = l, baseSize = 1 / 3}
+    | r == (1 / 3) = def {snapLoc = l, baseSize = 2 / 3}
+    | otherwise    = adfl l
+
+-- adfl is the "almost-default" FullLoc, with a given SnapLoc. I'm great at naming.
+adfl :: SnapLoc -> FullLoc
+adfl l = def {snapLoc = l}
+
 -- Snap is a message that can be sent to SnapLayout in response to user input, which instructs the
 -- layout to snap a window to a particular SnapLoc.
 data Snap = Snap SnapLoc Window
@@ -237,8 +260,8 @@ instance Message Unsnap
 data Unadjust = Unadjust Window
 instance Message Unadjust
 
--- SnapLayout is a LayoutClass that lets the user snap windows to particular edges of the screen,
--- at 1/2 screen width or height.
+-- SnapLayout is a LayoutClass that lets the user snap windows to particular edges or corners of the
+-- screen, at various fractions of screen width and/or height.
 data SnapLayout a = SnapLayout { snapped :: !(Map.Map Window FullLoc) -- ^ Map used internally to keep track of Window states (default: Map.empty)
                                , adjustmentDelta :: Rational          -- ^ Percent of screen to adjust by in response to each FineAdjustmentMessage (default: 3/100)
                                }
@@ -264,6 +287,7 @@ instance LayoutClass SnapLayout Window where
                                     (floor $ ad * fromIntegral wd * fromIntegral w)
                                     (floor $ ad * fromIntegral hd * fromIntegral h)
 
+              -- r is the original Rectangle that was passed into `pureLayout`.
               r :: Rectangle
               r = Rectangle x y w h
 
@@ -277,7 +301,7 @@ instance LayoutClass SnapLayout Window where
         where
               -- snap instructs the layout to snap a window to a location.
               snap :: Snap -> SnapLayout Window
-              snap (Snap l w) = SnapLayout (Map.insert w (def {snapLoc = l}) mp) ad
+              snap (Snap l w) = SnapLayout (Map.insert w (cycleSnapModes l (Map.lookup w mp)) mp) ad
 
               -- adjust instructs the layout to resize a snapped window.
               adjust :: FineAdjustmentMessage -> SnapLayout Window
@@ -304,6 +328,7 @@ instance LayoutClass SnapLayout Window where
               unadjustRect w (Just (FullLoc sl bs _ _)) =
                   SnapLayout (Map.insert w (FullLoc sl bs 0 0) mp) ad
 
+              -- sl is the original SnapLayout that was passed into `pureMessage`.
               sl :: SnapLayout Window
               sl = SnapLayout mp ad
 
