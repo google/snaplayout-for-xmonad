@@ -114,33 +114,45 @@ data SnapLoc = Top | Bottom | Left | Right | TopLeft | TopRight | BottomLeft | B
 
 -- rectForLoc translates a parent Rectangle and a SnapLoc into a child Rectangle to render the
 -- window in.
-rectForLoc :: Rectangle -> SnapLoc -> Rectangle
-rectForLoc r Top              = topHalf r
-rectForLoc r Bottom           = bottomHalf r
-rectForLoc r SnapLayout.Left  = leftHalf r
-rectForLoc r SnapLayout.Right = rightHalf r
-rectForLoc r TopLeft          = topHalf . leftHalf $ r
-rectForLoc r TopRight         = topHalf . rightHalf $ r
-rectForLoc r BottomLeft       = bottomHalf . leftHalf $ r
-rectForLoc r BottomRight      = bottomHalf . rightHalf $ r
+rectForLoc :: Rectangle -> SnapLoc -> Rational -> Rectangle
+rectForLoc r Top              s = topPart r s
+rectForLoc r Bottom           s = bottomPart r s
+rectForLoc r SnapLayout.Left  s = leftPart r s
+rectForLoc r SnapLayout.Right s = rightPart r s
+rectForLoc r TopLeft          s = topPart (leftPart r s) s
+rectForLoc r TopRight         s = topPart (rightPart r s) s
+rectForLoc r BottomLeft       s = bottomPart (leftPart r s) s
+rectForLoc r BottomRight      s = bottomPart (rightPart r s) s
 
--- topHalf returns the top half of a Rectangle.
-topHalf :: Rectangle -> Rectangle
-topHalf (Rectangle x y w h) = Rectangle x y w (h `div` 2)
+-- topPart returns the top portion of a Rectangle, as specified by the passed-in Rational.
+topPart :: Rectangle -> Rational -> Rectangle
+topPart (Rectangle x y w h) s = Rectangle x y w (dimensionTimesRational h s)
 
--- bottomHalf returns the bottom half of a Rectangle.
-bottomHalf :: Rectangle -> Rectangle
-bottomHalf (Rectangle x y w h) = Rectangle x (y + fromIntegral (h `div` 2)) w (h `div` 2)
+-- bottomPart returns the bottom portion of a Rectangle, as specified by the passed-in Rational.
+bottomPart :: Rectangle -> Rational -> Rectangle
+bottomPart (Rectangle x y w h) s =
+    Rectangle x (latterPartPosition y h s) w (dimensionTimesRational h s)
 
--- leftHalf returns the left half of a Rectangle.
-leftHalf :: Rectangle -> Rectangle
-leftHalf (Rectangle x y w h) = Rectangle x y (w `div` 2) h
+-- leftPart returns the left portion of a Rectangle, as specified by the passed-in Rational.
+leftPart :: Rectangle -> Rational -> Rectangle
+leftPart (Rectangle x y w h) s = Rectangle x y (dimensionTimesRational w s) h
 
--- rightHalf returns the right half of a Rectangle.
-rightHalf :: Rectangle -> Rectangle
-rightHalf (Rectangle x y w h) = Rectangle (x + fromIntegral (w `div` 2)) y (w `div` 2) h
+-- rightPart returns the right portion of a Rectangle, as specified by the passed-in Rational.
+rightPart :: Rectangle -> Rational -> Rectangle
+rightPart (Rectangle x y w h) s =
+    Rectangle (latterPartPosition x w s) y (dimensionTimesRational w s) h
 
--- adjustSnappedRect resizes a snapped rect given width and height adjustment counts.
+-- latterPartPosition computes the top-left corner Position of the right or bottom portions of a
+-- Rectangle.
+latterPartPosition :: Position -> Dimension -> Rational -> Position
+latterPartPosition p d r = p + fromIntegral (dimensionTimesRational d (1 - r))
+
+-- dimensionTimesRational multiplies a Dimension by a Rational and converts it back to a (floor'd)
+-- Dimension.
+dimensionTimesRational :: Dimension -> Rational -> Dimension
+dimensionTimesRational d r = floor (fromIntegral d * r)
+
+-- adjustSnappedRect resizes a snapped rect given width and height adjustments.
 adjustSnappedRect :: Rectangle -> SnapLoc -> Integer -> Integer -> Rectangle
 adjustSnappedRect r Top              wd hd = adjustTop r hd
 adjustSnappedRect r Bottom           wd hd = adjustBottom r hd
@@ -169,14 +181,15 @@ adjustRight (Rectangle x y w h) wd = Rectangle (x + fromIntegral wd) y (w - from
 
 -- FullLoc describes the complete location of a window, including the SnapLoc to describe where the
 -- window is snapped to, and the adjusted window size.
-data FullLoc = FullLoc { snapLoc :: SnapLoc
-                       , widthDelta :: Integer
-                       , heightDelta :: Integer
+data FullLoc = FullLoc { snapLoc :: SnapLoc     -- ^ Location of the screen to which the window is snapped (default: SnapLayout.Left)
+                       , baseSize :: Rational   -- ^ Initial proportion of the screen a snapped window takes up, before being adjusted (default: 1/2)
+                       , widthDelta :: Integer  -- ^ Change in wihdt (in some increment defined elsewhere) from the baseSize (default: 0)
+                       , heightDelta :: Integer -- ^ Change in height (in some increment defined elsewhere) from the baseSize (default: 0)
                        }
                        deriving (Show, Read)
 
 instance Default FullLoc where
-    def = FullLoc SnapLayout.Left 0 0
+    def = FullLoc SnapLayout.Left (1 / 2) 0 0
 
 -- Snap is a message that can be sent to SnapLayout in response to user input, which instructs the
 -- layout to snap a window to a particular SnapLoc.
@@ -246,8 +259,8 @@ instance LayoutClass SnapLayout Window where
               -- computeRect compuates the location and bounds of a single window.
               computeRect :: Maybe FullLoc -> Rectangle
               computeRect Nothing = r
-              computeRect (Just (FullLoc sl wd hd)) =
-                  adjustSnappedRect (rectForLoc r sl) sl
+              computeRect (Just (FullLoc sl bs wd hd)) =
+                  adjustSnappedRect (rectForLoc r sl bs) sl
                                     (floor $ ad * fromIntegral wd * fromIntegral w)
                                     (floor $ ad * fromIntegral hd * fromIntegral h)
 
@@ -273,9 +286,9 @@ instance LayoutClass SnapLayout Window where
               -- adjustRect is a helper for `adjust` to unpack the `Maybe`.
               adjustRect :: FineAdjustmentDirection -> Window -> Maybe FullLoc -> SnapLayout Window
               adjustRect d w Nothing = sl
-              adjustRect d w (Just (FullLoc sl wd hd)) =
-                  SnapLayout (Map.insert w (FullLoc sl (adjustWidth wd d) (adjustHeight hd d)) mp)
-                             ad
+              adjustRect d w (Just (FullLoc sl bs wd hd)) =
+                  SnapLayout (Map.insert w (FullLoc sl bs (adjustWidth wd d)
+                                                          (adjustHeight hd d)) mp) ad
 
               -- unsnap instructs the layout to unsnap a window.
               unsnap :: Unsnap -> SnapLayout Window
@@ -288,8 +301,8 @@ instance LayoutClass SnapLayout Window where
               -- unadjustRect is a helper for `unadjust` to unpack the `Maybe`.
               unadjustRect :: Window -> Maybe FullLoc -> SnapLayout Window
               unadjustRect w Nothing = sl
-              unadjustRect w (Just (FullLoc sl _ _)) = SnapLayout (Map.insert w (FullLoc sl 0 0) mp)
-                                                                  ad
+              unadjustRect w (Just (FullLoc sl bs _ _)) =
+                  SnapLayout (Map.insert w (FullLoc sl bs 0 0) mp) ad
 
               sl :: SnapLayout Window
               sl = SnapLayout mp ad
