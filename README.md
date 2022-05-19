@@ -86,7 +86,6 @@ cabal new-install --lib xmonad xmonad-contrib data-default
 * use alternative layout (maybe [Tall](https://hackage.haskell.org/package/xmonad-0.17.0/docs/XMonad-Layout.html#t:Tall), [Tabbed](https://hackage.haskell.org/package/xmonad-contrib-0.17.0/docs/XMonad-Layout-Tabbed.html), or [Grid](https://hackage.haskell.org/package/xmonad-contrib-0.17.0/docs/XMonad-Layout-Grid.html)?) for windows that aren't snapped
 * maybe add options for snapping windows snapped to "middle cells" rather than just screen edges? (for non-1/2-screen snaps)
 * possibly a single-window full-screen mode
-* stack overlapping windows in a better order (maybe last touched on top?)
 
 ## Contributing
 

@@ -273,7 +273,7 @@ instance Default (SnapLayout a) where
 instance LayoutClass SnapLayout Window where
     -- pureLayout is responsible for the actual positioning of windows on the screen.
     pureLayout :: SnapLayout Window -> Rectangle -> W.Stack Window -> [(Window, Rectangle)]
-    pureLayout (SnapLayout mp ad) (Rectangle x y w h) s = map layout (W.integrate s)
+    pureLayout (SnapLayout mp ad) (Rectangle x y w h) (W.Stack f u d) = map layout (f : u ++ d)
         where
               -- layout compuates the location and bounds of a single window, and returns a tuple of
               -- the bounds with the window itself.
