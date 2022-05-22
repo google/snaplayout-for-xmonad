@@ -277,6 +277,7 @@ instance LayoutClass SnapLayout Window where
         where
               -- layout compuates the location and bounds of a single window, and returns a tuple of
               -- the bounds with the window itself.
+              layout :: Window -> (Window, Rectangle)
               layout w = (w, computeRect (Map.lookup w mp))
 
               -- computeRect compuates the location and bounds of a single window.
