@@ -108,7 +108,7 @@ import qualified Data.Map as Map
 --
 -- https://hackage.haskell.org/package/xmonad-contrib-0.17.0/docs/XMonad-Doc-Extending.html#Editing_key_bindings
 
--- SnaLoc represents a "location" that a window can be snapped to.
+-- SnapLoc represents a "location" that a window can be snapped to.
 data SnapLoc = Top | Bottom | Left | Right | TopLeft | TopRight | BottomLeft | BottomRight
     deriving (Show, Read, Eq)
 
