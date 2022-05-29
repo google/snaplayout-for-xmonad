@@ -52,10 +52,11 @@ import qualified Data.Map as Map
 -- You can use this module with the following in your @~\/.xmonad\/xmonad.hs@:
 --
 -- > import SnapLayout
+-- > import FocusOnTop
 --
 -- Then edit your @layoutHook@ by adding the SnapLayout:
 --
--- > myLayout = snapLayout ||| Full ||| etc..
+-- > myLayout = focusOnTop snapLayout ||| Full ||| etc..
 -- >   where
 -- >     snapLayout :: SnapLayout a
 -- >     snapLayout = def
@@ -63,7 +64,7 @@ import qualified Data.Map as Map
 --
 -- Or, to customize the fine adjustment increment:
 --
--- > myLayout = snapLayout ||| Full ||| etc..
+-- > myLayout = focusOnTop snapLayout ||| Full ||| etc..
 -- >   where
 -- >     snapLayout :: SnapLayout a
 -- >     snapLayout = def { adjustmentDelta = 3/100 }
@@ -285,6 +286,10 @@ instance Default (SnapLayout a) where
 
 instance LayoutClass SnapLayout Window where
     -- | pureLayout is responsible for the actual positioning of windows on the screen.
+    -- Note: the (f : u ++ d) bit is unnecessary if `SnapLayout` is used in conjunction with
+    -- `FocusOnTop`. It's here to make sure the focused window is still always on top if someone
+    -- tries to use it without `FocusOnTop`, but it can cause unexpected reordering of windows, so
+    -- it really is best to just use `FocusOnTop` as intended.
     pureLayout :: SnapLayout Window -> Rectangle -> W.Stack Window -> [(Window, Rectangle)]
     pureLayout (SnapLayout mp ad) (Rectangle x y w h) (W.Stack f u d) = map layout (f : u ++ d)
         where

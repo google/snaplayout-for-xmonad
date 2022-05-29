@@ -10,12 +10,13 @@ You can use this module with the following in your `~/.xmonad/xmonad.hs`:
 
 ```haskell
 import SnapLayout
+import FocusOnTop
 ```
 
 Then edit your `layoutHook` by adding the SnapLayout:
 
 ```haskell
-myLayout = snapLayout ||| Full ||| etc..
+myLayout = focusOnTop snapLayout ||| Full ||| etc..
   where
     snapLayout :: SnapLayout a
     snapLayout = def
@@ -25,7 +26,7 @@ main = xmonad def { layoutHook = myLayout }
 Or, to customize the fine adjustment increment:
 
 ```haskell
-myLayout = snapLayout ||| Full ||| etc..
+myLayout = focusOnTop snapLayout ||| Full ||| etc..
   where
     snapLayout :: SnapLayout a
     snapLayout = def { adjustmentDelta = 3/100 }
@@ -80,6 +81,10 @@ Using [Cabal](https://www.haskell.org/cabal/) (recommended):
 ```
 cabal new-install --lib xmonad xmonad-contrib data-default
 ```
+
+## FocusOnTop
+
+FocusOnTop [FocusOnTop.hs](FocusOnTop.hs) is a [LayoutModifier](https://hackage.haskell.org/package/xmonad-contrib-0.17.0/docs/XMonad-Layout-LayoutModifier.html) that pulls the focused `Window` to the front of the screen, while preserving the relative order of the rest of the `Window`s. It's primarily intended for SnapLayout (see config examples above), but it could be used to modify other Layouts as well.
 
 ## Future Plans
 
