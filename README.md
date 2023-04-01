@@ -1,5 +1,7 @@
 # SnapLayout for XMonad
 
+![Haskell CI](https://github.com/google/snaplayout-for-xmonad/actions/workflows/haskell.yml/badge.svg?event=push)
+
 **This is not an officially supported Google product**
 
 SnapLayout ([SnapLayout.hs](SnapLayout.hs)) is an [XMonad](https://xmonad.org/) [LayoutClass](https://hackage.haskell.org/package/xmonad-0.17.0/docs/XMonad-Core.html#t:LayoutClass) that lets the user snap windows to particular edges or corners of the screen, at various fractions of screen width and/or height.
@@ -78,8 +80,8 @@ https://hackage.haskell.org/package/xmonad-contrib-0.17.0/docs/XMonad-Doc-Extend
 
 Using [Cabal](https://www.haskell.org/cabal/) (recommended):
 
-```
-cabal new-install --lib xmonad xmonad-contrib data-default
+```bash
+cabal new-install --lib base xmonad xmonad-contrib data-default containers
 ```
 
 ## Running Tests
