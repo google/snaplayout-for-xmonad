@@ -32,13 +32,13 @@
 module SnapLayout (
     -- * Usage
     -- $usage
-    SnapLayout(..),
-    SnapLoc(..),
-    Snap(..),
-    FineAdjustmentMessage(..),
-    FineAdjustmentDirection(..),
-    Unsnap(..),
-    Unadjust(..)
+    SnapLayout(..)
+  , SnapLoc(..)
+  , Snap(..)
+  , FineAdjustmentMessage(..)
+  , FineAdjustmentDirection(..)
+  , Unsnap(..)
+  , Unadjust(..)
   ) where
 
 import XMonad

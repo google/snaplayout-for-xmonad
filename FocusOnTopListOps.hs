@@ -29,11 +29,11 @@
 ---------------------------------------------------------------------------------------------------
 
 module FocusOnTopListOps (
-    remove,
-    removeAssoc,
-    reverseConcat,
-    maybeCons,
-    reorder
+    remove
+  , removeAssoc
+  , reverseConcat
+  , maybeCons
+  , reorder
   ) where
 
 -- | remove takes an equality predicate of @a@ and @b@, a list of @a@, and a @b@, and removes the
