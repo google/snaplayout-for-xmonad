@@ -93,12 +93,7 @@ cabal new-install --lib base xmonad xmonad-contrib data-default containers
 
 2. Compile test files:
    ```bash
-   ghc *Test.hs
-   ```
-
-3. Run each compiled test file individually. Example:
-   ```bash
-   ./FocusOnTopListOpsTest
+   cabal test
    ```
 
 ## FocusOnTop

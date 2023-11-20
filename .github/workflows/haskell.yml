@@ -44,7 +44,7 @@ jobs:
         cabal new-install --lib base xmonad xmonad-contrib data-default containers HUnit
 
     - name: Build
-      run: ghc -dynamic *.hs
+      run: cabal build
 
     - name: Run tests
-      run: ./FocusOnTopListOpsTest
+      run: cabal test
