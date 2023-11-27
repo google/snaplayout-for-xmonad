@@ -1,0 +1,21 @@
+name: "Nix"
+on:
+  pull_request:
+  push:
+jobs:
+  nix:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v3
+    - uses: cachix/install-nix-action@v23
+      with:
+        nix_path: nixpkgs=channel:nixos-unstable
+
+    - name: nixpkgs version
+      run: nix-instantiate --eval -E '(import <nixpkgs> {}).lib.version'
+
+    - name: nix-build
+      run: nix-build
+
+    - name: nix build
+      run: nix build

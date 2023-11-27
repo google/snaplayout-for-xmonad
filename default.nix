@@ -9,4 +9,4 @@
   {
     src = builtins.path { path = ./.; name = "snaplayout-for-xmonad"; };
   }
-).shellNix
+).defaultNix
