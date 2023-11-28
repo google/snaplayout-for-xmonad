@@ -96,6 +96,34 @@ cabal new-install --lib base xmonad xmonad-contrib data-default containers
    cabal test
    ```
 
+## Using with [NixOS](https://nixos.org/)
+
+Add something like this to the top of your `configuration.nix`:
+
+```nix
+{ config, pkgs, ... }:
+let
+  snaplayout-for-xmonad = (import (fetchTarball {
+    url = "https://github.com/google/snaplayout-for-xmonad/archive/refs/tags/v0.0.5.0.tar.gz";
+    sha256 = "sha256:0kfxq585f8r9sijsf0mpabhi94260h7qs01h80gsl9za6p2vrlkr";
+  })).outputs.packages.${builtins.currentSystem}.snaplayout-for-xmonad;
+in
+{
+```
+
+And then something like this in the main body:
+
+```nix
+  services.xserver.enable = true;
+  services.xserver.windowManager.xmonad = {
+    enableContribAndExtras = true;
+    enable = true;
+    extraPackages = haskellPackages: [
+      snaplayout-for-xmonad
+    ];
+  };
+```
+
 ## FocusOnTop
 
 FocusOnTop [FocusOnTop.hs](FocusOnTop.hs) is a [LayoutModifier](https://hackage.haskell.org/package/xmonad-contrib-0.17.0/docs/XMonad-Layout-LayoutModifier.html) that pulls the focused `Window` to the front of the screen, while preserving the relative order of the rest of the `Window`s. It's primarily intended for SnapLayout (see config examples above), but it could be used to modify other Layouts as well.
