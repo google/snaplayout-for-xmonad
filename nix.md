@@ -62,8 +62,8 @@ Add something like this to the top of your `configuration.nix`:
 { config, pkgs, ... }:
 let
   snaplayout-for-xmonad = (import (fetchTarball {
-    url = "https://github.com/google/snaplayout-for-xmonad/archive/refs/tags/v0.0.5.0.tar.gz";
-    sha256 = "sha256:0kfxq585f8r9sijsf0mpabhi94260h7qs01h80gsl9za6p2vrlkr";
+    url = "https://github.com/google/snaplayout-for-xmonad/archive/refs/tags/v0.0.5.1.tar.gz";
+    sha256 = "sha256:1ljp1ba18iz4cq94z12akzhm79r4yc587jmwxp4fs96lzd6v87ys";
   })).outputs.packages.${builtins.currentSystem}.snaplayout-for-xmonad;
 in
 {
