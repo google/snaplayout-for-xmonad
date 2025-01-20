@@ -4,7 +4,7 @@
 
 **This is not an officially supported Google product**
 
-SnapLayout ([SnapLayout.hs](SnapLayout.hs)) is an [XMonad](https://xmonad.org/) [LayoutClass](https://hackage.haskell.org/package/xmonad-0.17.0/docs/XMonad-Core.html#t:LayoutClass) that lets the user snap windows to particular edges or corners of the screen, at various fractions of screen width and/or height.
+SnapLayout ([SnapLayout.hs](SnapLayout.hs)) is an [XMonad](https://xmonad.org/) [LayoutClass](https://hackage.haskell.org/package/xmonad-0.18.0/docs/XMonad-Core.html#t:LayoutClass) that lets the user snap windows to particular edges or corners of the screen, at various fractions of screen width and/or height.
 
 Usage:
 
@@ -37,7 +37,7 @@ main = xmonad def { layoutHook = myLayout }
 
 For more detailed instructions on editing the `layoutHook` see:
 
-https://hackage.haskell.org/package/xmonad-contrib-0.17.0/docs/XMonad-Doc-Extending.html#Editing_the_layout_hook
+https://hackage.haskell.org/package/xmonad-contrib-0.18.0/docs/XMonad-Doc-Extending.html#Editing_the_layout_hook
 
 In the key-bindings, do something like:
 
@@ -74,7 +74,7 @@ In the key-bindings, do something like:
 
 For detailed instruction on editing the key binding see:
 
-https://hackage.haskell.org/package/xmonad-contrib-0.17.0/docs/XMonad-Doc-Extending.html#Editing_key_bindings
+https://hackage.haskell.org/package/xmonad-contrib-0.18.0/docs/XMonad-Doc-Extending.html#g:8
 
 ## Installing Dependencies
 
@@ -102,11 +102,11 @@ cabal new-install --lib base xmonad xmonad-contrib data-default containers
 
 ## FocusOnTop
 
-FocusOnTop [FocusOnTop.hs](FocusOnTop.hs) is a [LayoutModifier](https://hackage.haskell.org/package/xmonad-contrib-0.17.0/docs/XMonad-Layout-LayoutModifier.html) that pulls the focused `Window` to the front of the screen, while preserving the relative order of the rest of the `Window`s. It's primarily intended for SnapLayout (see config examples above), but it could be used to modify other Layouts as well.
+FocusOnTop [FocusOnTop.hs](FocusOnTop.hs) is a [LayoutModifier](https://hackage.haskell.org/package/xmonad-contrib-0.18.0/docs/XMonad-Layout-LayoutModifier.html) that pulls the focused `Window` to the front of the screen, while preserving the relative order of the rest of the `Window`s. It's primarily intended for SnapLayout (see config examples above), but it could be used to modify other Layouts as well.
 
 ## Future Plans
 
-* use alternative layout (maybe [Tall](https://hackage.haskell.org/package/xmonad-0.17.0/docs/XMonad-Layout.html#t:Tall), [Tabbed](https://hackage.haskell.org/package/xmonad-contrib-0.17.0/docs/XMonad-Layout-Tabbed.html), or [Grid](https://hackage.haskell.org/package/xmonad-contrib-0.17.0/docs/XMonad-Layout-Grid.html)?) for windows that aren't snapped
+* use alternative layout (maybe [Tall](https://hackage.haskell.org/package/xmonad-0.18.0/docs/XMonad-Layout.html#t:Tall), [Tabbed](https://hackage.haskell.org/package/xmonad-contrib-0.18.0/docs/XMonad-Layout-Tabbed.html), or [Grid](https://hackage.haskell.org/package/xmonad-contrib-0.18.0/docs/XMonad-Layout-Grid.html)?) for windows that aren't snapped
 * maybe add options for snapping windows snapped to "middle cells" rather than just screen edges? (for non-1/2-screen snaps)
 * possibly a single-window full-screen mode
 
